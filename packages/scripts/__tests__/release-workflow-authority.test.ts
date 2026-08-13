@@ -15,11 +15,17 @@ describe("release workflow authority", () => {
     const workflowFiles = readdirSync(workflowDirectory).filter((name) =>
       /\.ya?ml$/.test(name),
     );
-    const releaseEntries = workflowFiles.filter((name) =>
+    const releaseCandidates = workflowFiles.filter((name) =>
       /^(?:release|publish|update-homebrew|.*-release)\.(?:yml|yaml)$/.test(
         name,
       ),
     );
+    const releaseEntries = releaseCandidates.filter((name) => {
+      const workflow = Bun.YAML.parse(
+        readFileSync(join(workflowDirectory, name), "utf8"),
+      ) as { on?: Record<string, unknown> };
+      return Object.hasOwn(workflow.on ?? {}, "workflow_dispatch");
+    });
     expect(releaseEntries).toEqual(["release.yaml"]);
 
     const source = readFileSync(
@@ -31,6 +37,11 @@ describe("release workflow authority", () => {
     };
     expect(Object.keys(workflow.on ?? {})).toEqual(["workflow_dispatch"]);
     expect(source).not.toMatch(/^\s+(?:push|release|schedule):/m);
+
+    const cloudRelease = Bun.YAML.parse(
+      readFileSync(join(workflowDirectory, "cloud-cf-release.yml"), "utf8"),
+    ) as { on?: Record<string, unknown> };
+    expect(Object.keys(cloudRelease.on ?? {})).toEqual(["workflow_call"]);
   });
 
   test("retired competing release authorities stay absent", () => {
