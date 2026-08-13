@@ -9,10 +9,16 @@ import { describe, expect, it } from "vitest";
 const repositoryRoot = path.resolve(import.meta.dirname, "../../..");
 const workflowsDirectory = path.join(repositoryRoot, ".github/workflows");
 const workflowPath = path.join(workflowsDirectory, "cloud-cf-deploy.yml");
+const releaseWorkflowPath = path.join(
+  workflowsDirectory,
+  "cloud-cf-release.yml",
+);
 const qualityWorkflowPath = path.join(workflowsDirectory, "quality.yml");
 
 describe("homepage deployment workflow", () => {
   const workflow = readFileSync(workflowPath, "utf8");
+  const releaseWorkflow = readFileSync(releaseWorkflowPath, "utf8");
+  const completeWorkflow = `${workflow}\n${releaseWorkflow}`;
   const qualityWorkflow = readFileSync(qualityWorkflowPath, "utf8");
   const homepagePackage = JSON.parse(
     readFileSync(
@@ -48,7 +54,7 @@ describe("homepage deployment workflow", () => {
     ]) {
       expect(homepagePackage.scripts?.[script]).toBeUndefined();
     }
-    expect(workflow).not.toContain("eliza-app-home");
+    expect(completeWorkflow).not.toContain("eliza-app-home");
     expect(devAll).not.toContain("packages/homepage");
     expect(devAll).not.toContain("DEV_ALL_HOMEPAGE_PORT");
   });
@@ -58,39 +64,49 @@ describe("homepage deployment workflow", () => {
     expect(workflow).toContain('      - "packages/homepage/**"');
     expect(workflow).toContain("Build consolidated frontend artifact");
     expect(workflow).toContain("Upload consolidated frontend artifact");
-    expect(workflow).toContain("PAGES_PROJECT: eliza-app");
-    expect(workflow).toContain("https://eliza.app");
-    expect(workflow).toContain("https://cloud.eliza.app");
-    expect(workflow).toContain("https://staging.eliza.app");
-    expect(workflow).toContain("https://cloud-staging.eliza.app");
+    expect(releaseWorkflow).toContain("PAGES_PROJECT: eliza-app");
+    expect(completeWorkflow).toContain("https://eliza.app");
+    expect(completeWorkflow).toContain("https://cloud.eliza.app");
+    expect(completeWorkflow).toContain("https://staging.eliza.app");
+    expect(completeWorkflow).toContain("https://cloud-staging.eliza.app");
   });
 
   it("resolves matched Telegram configuration for canonical and preview builds", () => {
-    expect(workflow).toContain("resolve-pages-environment-config:");
+    expect(releaseWorkflow).toContain("resolve-pages-environment-config:");
     expect(workflow).toContain("resolve-pages-preview-config:");
     expect(workflow).toContain("VITE_TELEGRAM_BOT_ID must be numeric");
-    expect(workflow.match(/TELEGRAM_BOT_ID=7684336618/g)).toHaveLength(2);
-    expect(workflow.match(/TELEGRAM_BOT_USERNAME=Elizav2_Bot/g)).toHaveLength(
+    expect(completeWorkflow.match(/TELEGRAM_BOT_ID=7684336618/g)).toHaveLength(
       2,
     );
     expect(
-      workflow.match(
+      completeWorkflow.match(/TELEGRAM_BOT_USERNAME=Elizav2_Bot/g),
+    ).toHaveLength(2);
+    expect(
+      completeWorkflow.match(
         /VITE_TELEGRAM_BOT_ID and VITE_TELEGRAM_BOT_USERNAME must be configured together/g,
       ),
     ).toHaveLength(2);
-    expect(workflow).toContain(
+    expect(releaseWorkflow).toContain(
       "VITE_TELEGRAM_BOT_ID: $" +
-        "{{ needs.resolve-pages-environment-config.outputs.telegram_bot_id || needs.resolve-pages-preview-config.outputs.telegram_bot_id }}",
+        "{{ needs.resolve-pages-environment-config.outputs.telegram_bot_id }}",
     );
     expect(workflow).toContain(
       "VITE_TELEGRAM_BOT_USERNAME: $" +
-        "{{ needs.resolve-pages-environment-config.outputs.telegram_bot_username || needs.resolve-pages-preview-config.outputs.telegram_bot_username }}",
+        "{{ needs.resolve-pages-preview-config.outputs.telegram_bot_username }}",
     );
     expect(workflow).toContain(
       "VITE_TELEGRAM_BOT_ID: $" +
+        "{{ needs.resolve-pages-preview-config.outputs.telegram_bot_id }}",
+    );
+    expect(releaseWorkflow).toContain(
+      "VITE_TELEGRAM_BOT_USERNAME: $" +
+        "{{ needs.resolve-pages-environment-config.outputs.telegram_bot_username }}",
+    );
+    expect(releaseWorkflow).toContain(
+      "VITE_TELEGRAM_BOT_ID: $" +
         "{{ needs.build-pages.outputs.telegram_bot_id }}",
     );
-    expect(workflow).toContain(
+    expect(releaseWorkflow).toContain(
       "VITE_TELEGRAM_BOT_USERNAME: $" +
         "{{ needs.build-pages.outputs.telegram_bot_username }}",
     );

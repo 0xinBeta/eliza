@@ -21,6 +21,10 @@ const consumerSource = readFileSync(
   new URL(".github/workflows/cloud-cf-pr-preview-deploy.yml", repoRoot),
   "utf8",
 );
+const releaseSource = readFileSync(
+  new URL(".github/workflows/cloud-cf-release.yml", repoRoot),
+  "utf8",
+);
 
 interface WorkflowStep {
   env?: Record<string, string>;
@@ -64,6 +68,7 @@ interface Workflow {
 
 const producer = Bun.YAML.parse(producerSource) as Workflow;
 const consumer = Bun.YAML.parse(consumerSource) as Workflow;
+const release = Bun.YAML.parse(releaseSource) as Workflow;
 const deployJobs = ["deploy-app"] as const;
 const GNU_BASH = resolveGnuBash();
 const executedDescribe = GNU_BASH ? describe : describe.skip;
@@ -159,13 +164,9 @@ describe("Cloud CF PR preview workflow contract", () => {
 
   test("keeps PR builds reachable and gates canonical Pages on the API", () => {
     const buildJob = producer.jobs?.["build-pages"];
-    expect(buildJob?.needs).toEqual([
-      "migrate-db",
-      "resolve-pages-environment-config",
-      "resolve-pages-preview-config",
-    ]);
+    expect(buildJob?.needs).toBe("resolve-pages-preview-config");
     expect(buildJob?.if).toContain(
-      "github.event_name == 'pull_request' && needs.migrate-db.result == 'skipped'",
+      "github.event_name == 'pull_request' && needs.resolve-pages-preview-config.result == 'success'",
     );
     expect(
       namedStep(producer, "build-pages", "Validate PR preview identity").if,
@@ -173,7 +174,7 @@ describe("Cloud CF PR preview workflow contract", () => {
     expect(JSON.stringify(buildJob)).not.toContain("secrets.");
 
     for (const jobId of deployJobs) {
-      const job = producer.jobs?.[jobId];
+      const job = release.jobs?.[jobId];
       expect(job?.needs).toEqual(["deploy-api", "build-pages"]);
       expect(job?.if).toBe(
         "$" +

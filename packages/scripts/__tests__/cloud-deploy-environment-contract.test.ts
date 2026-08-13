@@ -40,8 +40,8 @@ function step(workflow: Workflow, jobId: string, name: string): WorkflowStep {
   return found;
 }
 
-const cloudSource = read(".github/workflows/cloud-cf-deploy.yml");
-const cloud = parse(".github/workflows/cloud-cf-deploy.yml");
+const cloudSource = read(".github/workflows/cloud-cf-release.yml");
+const cloud = parse(".github/workflows/cloud-cf-release.yml");
 const infraSource = read(".github/workflows/infra.yml");
 const infra = parse(".github/workflows/infra.yml");
 const provisioning = parse(

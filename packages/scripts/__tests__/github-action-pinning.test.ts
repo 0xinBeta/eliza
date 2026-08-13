@@ -305,15 +305,22 @@ describe("GitHub action supply-chain references", () => {
   });
 
   test("routes homepage deploys through the consolidated Cloudflare workflow", () => {
-    const source = readFileSync(
+    const caller = readFileSync(
       join(githubRoot, "workflows", "cloud-cf-deploy.yml"),
       "utf8",
     );
-    expect(source).toContain('      - "packages/homepage/**"');
-    expect(source).toContain("Build consolidated frontend artifact");
-    expect(source).toContain("PAGES_PROJECT: eliza-app");
-    expect(source).not.toContain("PAGES_PROJECT: eliza-app-home");
-    expect(source).not.toContain("git push");
+    const release = readFileSync(
+      join(githubRoot, "workflows", "cloud-cf-release.yml"),
+      "utf8",
+    );
+    expect(caller).toContain('      - "packages/homepage/**"');
+    expect(caller).toContain("Build consolidated frontend artifact");
+    expect(caller).toContain("uses: ./.github/workflows/cloud-cf-release.yml");
+    expect(release).toContain("PAGES_PROJECT: eliza-app");
+    expect(`${caller}\n${release}`).not.toContain(
+      "PAGES_PROJECT: eliza-app-home",
+    );
+    expect(`${caller}\n${release}`).not.toContain("git push");
   });
 
   test("keeps the Docker smoke on a runner with a Docker daemon", () => {

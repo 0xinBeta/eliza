@@ -6,7 +6,7 @@ import { validateStagingSessionCutoverConfig } from "../../cloud/scripts/validat
 
 const repoRoot = new URL("../../../", import.meta.url);
 const workflowSource = readFileSync(
-  new URL(".github/workflows/cloud-cf-deploy.yml", repoRoot),
+  new URL(".github/workflows/cloud-cf-release.yml", repoRoot),
   "utf8",
 );
 

@@ -27,7 +27,7 @@ interface Workflow {
   jobs?: Record<string, { steps?: WorkflowStep[] }>;
 }
 
-const workflowSource = read(".github/workflows/cloud-cf-deploy.yml");
+const workflowSource = read(".github/workflows/cloud-cf-release.yml");
 const workflow = Bun.YAML.parse(workflowSource) as Workflow;
 const publishStep = workflow.jobs?.["deploy-api"]?.steps?.find(
   (step) => step.name === "Publish Worker AI secrets",
@@ -212,8 +212,7 @@ describe("Cloud CF realtime voice deploy contract", () => {
     );
     expect(frontendRealtimeFlags?.length).toBeGreaterThanOrEqual(2);
     for (const flag of frontendRealtimeFlags ?? []) {
-      expect(flag).toContain("inputs.environment == 'production'");
-      expect(flag).toContain("github.ref == 'refs/heads/main'");
+      expect(flag).toContain("inputs.target_environment == 'production'");
       expect(flag).toContain("vars.VOICE_REALTIME_WS_ENABLED");
     }
   });

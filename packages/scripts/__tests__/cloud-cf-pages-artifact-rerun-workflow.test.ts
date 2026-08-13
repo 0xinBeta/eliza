@@ -15,7 +15,7 @@ import { spawnSync } from "../lib/spawn-sync-captured.mjs";
 
 const repoRoot = new URL("../../../", import.meta.url);
 const workflowSource = readFileSync(
-  new URL(".github/workflows/cloud-cf-deploy.yml", repoRoot),
+  new URL(".github/workflows/cloud-cf-release.yml", repoRoot),
   "utf8",
 );
 
@@ -112,10 +112,10 @@ describe("Cloud CF Pages artifact metadata", () => {
         "$" + "{{ steps.pages-artifact.outputs.source_sha }}",
       telegram_bot_id:
         "$" +
-        "{{ needs.resolve-pages-environment-config.outputs.telegram_bot_id || needs.resolve-pages-preview-config.outputs.telegram_bot_id }}",
+        "{{ needs.resolve-pages-environment-config.outputs.telegram_bot_id }}",
       telegram_bot_username:
         "$" +
-        "{{ needs.resolve-pages-environment-config.outputs.telegram_bot_username || needs.resolve-pages-preview-config.outputs.telegram_bot_username }}",
+        "{{ needs.resolve-pages-environment-config.outputs.telegram_bot_username }}",
     });
 
     const metadata = namedStep(

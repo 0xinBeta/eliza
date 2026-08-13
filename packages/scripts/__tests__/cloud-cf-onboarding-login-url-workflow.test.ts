@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 
-const workflow = readFileSync(".github/workflows/cloud-cf-deploy.yml", "utf8");
+const workflow = readFileSync(".github/workflows/cloud-cf-release.yml", "utf8");
 const wrangler = readFileSync("packages/cloud/api/wrangler.toml", "utf8");
 
 describe("staging onboarding login URL deployment", () => {
